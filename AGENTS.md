@@ -93,6 +93,13 @@ backend/
 ├── docker-compose.yml             # 6 服务编排 (ollama, ragflow, postgres, redis, backend, celery)
 ├── Dockerfile                     # Backend 镜像 (python:3.12-slim)
 ├── requirements.txt
+├── finetune/                      # LoRA 微调管线
+│   ├── export_data.py             # 从 DB 导出高质量对话
+│   ├── format_data.py             # 格式化为 Qwen2.5 Chat 模板
+│   ├── train_lora.py              # QLoRA 训练脚本
+│   ├── eval_model.py              # 模型评估
+│   ├── convert_to_ollama.py       # 转换 GGUF → Ollama
+│   └── requirements.txt
 └── .env.example
 ```
 
@@ -148,6 +155,16 @@ backend/
 - **RAGFlow 安全**: 首次登录后修改默认管理员密码；部署在私有网络
 - **全链路加密**: 生产环境加 Nginx 反向代理 + Let's Encrypt HTTPS
 - **JWT 密钥**: 修改 `.env` 中 `SECRET_KEY` 为随机强密钥
+
+## 文档
+
+| 文档 | 路径 | 内容 |
+|------|------|------|
+| API 文档 | [docs/api.md](docs/api.md) | 完整 REST API 参考（认证、对话、会话、反馈） |
+| 部署指南 | [docs/deployment.md](docs/deployment.md) | 开发/生产部署流程，阿里云 ECS 部署，安全清单 |
+| 架构设计 | [docs/architecture.md](docs/architecture.md) | LangGraph 图结构、Checkpoint 持久化、异常处理 |
+| 记忆系统 | [docs/memory-system.md](docs/memory-system.md) | 短期+长期双重记忆系统详解 |
+| 微调管线 | [backend/finetune/README.md](backend/finetune/README.md) | LoRA 微调：数据导出、格式化、训练、评估、部署 |
 
 ## .trae Skills
 
