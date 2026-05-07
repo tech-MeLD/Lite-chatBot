@@ -1,4 +1,5 @@
 import json
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -85,6 +86,9 @@ async def send_message(
                     }
                 })
                 yield f"data: {event_with_id}\n\n"
+
+                # Give the event loop a chance to flush the SSE data
+                await asyncio.sleep(0)
 
                 # Extract and store new memories from this conversation
                 conversation = f"用户: {request.content}\n助手: {answer_text}"

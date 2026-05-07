@@ -1,0 +1,74 @@
+# ========================
+# Python
+# ========================
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+*.so
+
+# ========================
+# Environment & Secrets
+# ========================
+.env
+.env.local
+.env.production
+*.pem
+*.key
+
+# ========================
+# Node.js / Tauri Frontend
+# ========================
+node_modules/
+tauri-app/dist/
+tauri-app/node_modules/
+
+# ========================
+# Rust / Tauri
+# ========================
+tauri-app/src-tauri/target/
+tauri-app/src-tauri/gen/
+*.rs.bk
+
+# ========================
+# IDE & Editor
+# ========================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ========================
+# Build & Output
+# ========================
+backend/dist/
+backend/build/
+*.msi
+*.exe
+*.dmg
+*.deb
+*.AppImage
+
+# ========================
+# Docker
+# ========================
+backend/data/
+
+# ========================
+# Qoder / Agent
+# ========================
+.qoder/
+
+# ========================
+# Logs
+# ========================
+*.log
+logs/

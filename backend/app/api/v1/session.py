@@ -1,6 +1,6 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.main import get_db
@@ -8,6 +8,7 @@ from app.api.deps import get_current_user
 from app.models.user import User
 from app.models.session import Session, SessionStatus
 from app.models.message import Message
+from app.models.feedback import Feedback
 from app.schemas.session import SessionCreate, SessionUpdate, SessionOut, MessageOut
 
 router = APIRouter(prefix="/sessions", tags=["sessions"])
@@ -145,3 +146,28 @@ async def update_session(
         created_at=session.created_at,
         updated_at=session.updated_at,
     )
+
+
+@router.delete("/{session_id}", status_code=204)
+async def delete_session(
+    session_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Session).where(Session.id == session_id, Session.user_id == user.id)
+    )
+    session = result.scalar_one_or_none()
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Delete feedbacks linked to messages in this session
+    msg_subquery = select(Message.id).where(Message.session_id == session.id)
+    await db.execute(delete(Feedback).where(Feedback.message_id.in_(msg_subquery)))
+
+    # Delete messages in this session
+    await db.execute(delete(Message).where(Message.session_id == session.id))
+
+    # Delete the session itself
+    await db.execute(delete(Session).where(Session.id == session.id))
+    await db.flush()

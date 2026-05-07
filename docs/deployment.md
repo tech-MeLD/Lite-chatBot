@@ -200,6 +200,61 @@ systemctl enable customer-service
 
 ---
 
+## Tauri 桌面端构建
+
+### 1. 环境要求
+
+- Node.js 18+
+- Rust 1.70+（[rustup.rs](https://rustup.rs)）
+- Windows: Microsoft Visual Studio Build Tools（C++ 桌面开发工作负载）
+
+### 2. 开发者模式
+
+```bash
+cd tauri-app
+
+# 安装依赖
+npm install
+
+# 浏览器开发（需要后端已启动）
+npm run dev
+# → http://127.0.0.1:1420
+
+# Tauri 桌面窗口开发
+npm run tauri:dev
+```
+
+### 3. 生产打包
+
+```bash
+cd tauri-app
+
+# 安装依赖 + 打包
+npm install
+npm run tauri:build
+```
+
+产物位置：
+- `.msi` 安装包 → `src-tauri/target/release/bundle/msi/`
+- `.exe` 安装包 → `src-tauri/target/release/bundle/nsis/`
+
+### 4. 配置后端地址
+
+桌面端 API 地址通过环境变量注入，默认 `http://localhost:8000`：
+
+```bash
+# 构建时指定远程后端
+VITE_API_BASE=https://your-server.com npm run tauri:build
+```
+
+或在开发模式使用 `.env.local`：
+
+```env
+VITE_API_BASE=http://192.168.1.100:8000
+```
+
+---
+
 ## 安全清单
 
 部署前必须确认：

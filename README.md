@@ -2,12 +2,18 @@
 
 基于 **LangGraph + RAGFlow + Qwen2.5** 的在线智能客服对话系统。以 LangGraph 图状态机为核心引擎，串联意图识别、RAG 知识检索、答案生成与人工兜底，支持对话状态持久化与中断恢复，面向私有化部署场景。
 
+提供 **Tauri 桌面客户端**（Windows .msi/.exe），React + TypeScript 构建，SSE 流式对话体验。
+
 ## 快速开始
 
 ### 1. 环境要求
 
-- Docker Desktop（Windows / macOS / Linux）
-- Python 3.12（本地开发/测试用）
+| 环境 | 用途 |
+|------|------|
+| Docker Desktop | 后端服务运行 |
+| Python 3.12 | 本地开发/测试 |
+| Node.js 18+ | 桌面端前端开发 |
+| Rust 1.70+ | Tauri 桌面端编译 |
 
 ### 2. 配置环境变量
 
@@ -19,7 +25,7 @@ cp .env.example .env
 
 > 国内网络需配置 Docker 镜像加速：Docker Desktop → Settings → Docker Engine → 添加 `registry-mirrors: ["https://docker.1ms.run"]`
 
-### 3. 一键启动
+### 3. 启动后端服务
 
 ```bash
 cd backend
@@ -40,7 +46,25 @@ curl http://localhost:8000/health
 # → {"status":"ok"}
 ```
 
-### 6. 测试对话
+### 6. 启动桌面客户端
+
+```bash
+cd tauri-app
+
+# 浏览器开发模式
+npm install && npm run dev
+# → http://127.0.0.1:1420
+
+# Tauri 桌面窗口模式
+npm run tauri:dev
+
+# 打包 Windows 安装包
+npm run tauri:build
+# → src-tauri/target/release/bundle/msi/*.msi
+# → src-tauri/target/release/bundle/nsis/*.exe
+```
+
+### 7. 测试对话
 
 ```bash
 # 1. 登录获取 token
@@ -72,6 +96,7 @@ curl -X POST http://localhost:8000/api/v1/chat/send \
 | 后端 | FastAPI（SSE 流式 + Celery 异步任务） |
 | 数据库 | PostgreSQL + pgvector |
 | 记忆系统 | Checkpointer（短期）+ pgvector（长期） |
+| 桌面端 | Tauri v2 + React 18 + TypeScript + Tailwind CSS |
 | 容器化 | Docker Compose |
 
 ## 文档
@@ -97,4 +122,8 @@ curl -X POST http://localhost:8000/api/v1/chat/send \
 - [x] Docker Compose 一键部署
 - [x] 安全中间件与速率限制
 - [x] LoRA 微调管线（数据导出、格式化、QLoRA 训练、评估、Ollama 部署）
-- [ ] Tauri 桌面端
+- [x] Tauri 桌面端（登录、会话管理、SSE 流式对话、反馈、.msi/.exe 打包）
+
+## 更新报告
+
+问题和修复记录在 [CHANGELOG/](CHANGELOG/) 目录，按日期归档。

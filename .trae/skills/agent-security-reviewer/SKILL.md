@@ -2,7 +2,6 @@
 name: "agent-security-reviewer"
 description: "AI Agent 项目上线前安全审查，覆盖模型服务、知识库、数据闭环、应用安全、基础设施等 10 大安全域。Invoke when deploying AI agents, launching LLM-powered services, or auditing agent infrastructure for security vulnerabilities."
 ---
-
 # Agent Security Reviewer
 
 AI Agent 项目上线部署前的全面安全审查。覆盖模型推理服务、RAG 知识库、微调数据闭环、应用安全、身份认证、数据隐私、日志监控、供应链、基础设施及合规治理十大安全领域。
@@ -22,18 +21,18 @@ Agent Security Reviewer 扮演安全审计专家角色，对 AI Agent 项目在�
 
 ## Review Scope（十大安全域）
 
-| # | 安全域 | 核心关注点 |
-|---|--------|-----------|
-| ❶ | 模型与推理服务安全 | Ollama/vLLM 服务隔离、API 鉴权、TLS 加密 |
-| ❷ | RAGFlow 知识库安全 | 访问控制、网络隔离、默认凭证、数据脱敏 |
-| ❸ | 微调数据闭环安全 | 反馈收集、数据标注清洗、人工校验、隐私保护 |
-| ❹ | 应用安全 | Prompt Injection 防护、输入验证、XSS/CSRF |
-| ❺ | 身份认证与访问控制 | MFA、最小权限、API Key 管理、会话安全 |
-| ❻ | 数据安全与隐私 | 传输加密、存储加密、脱敏策略、备份恢复 |
-| ❼ | 日志与监控 | 安全审计日志、异常检测、实时告警 |
-| ❽ | 供应链与依赖安全 | 依赖漏洞扫描、容器镜像安全、SBOM |
-| ❾ | 基础设施与部署安全 | Docker/K8s 安全配置、网络策略、密钥管理 |
-| ❿ | 合规与安全治理 | 数据合规、安全测试(SAST/DAST)、应急响应 |
+| #  | 安全域             | 核心关注点                                 |
+| -- | ------------------ | ------------------------------------------ |
+| ❶ | 模型与推理服务安全 | Ollama/vLLM 服务隔离、API 鉴权、TLS 加密   |
+| ❷ | RAGFlow 知识库安全 | 访问控制、网络隔离、默认凭证、数据脱敏     |
+| ❸ | 微调数据闭环安全   | 反馈收集、数据标注清洗、人工校验、隐私保护 |
+| ❹ | 应用安全           | Prompt Injection 防护、输入验证、XSS/CSRF  |
+| ❺ | 身份认证与访问控制 | MFA、最小权限、API Key 管理、会话安全      |
+| ❻ | 数据安全与隐私     | 传输加密、存储加密、脱敏策略、备份恢复     |
+| ❼ | 日志与监控         | 安全审计日志、异常检测、实时告警           |
+| ❽ | 供应链与依赖安全   | 依赖漏洞扫描、容器镜像安全、SBOM           |
+| ❾ | 基础设施与部署安全 | Docker/K8s 安全配置、网络策略、密钥管理    |
+| ❿ | 合规与安全治理     | 数据合规、安全测试(SAST/DAST)、应急响应    |
 
 ---
 
@@ -363,16 +362,19 @@ Agent Security Reviewer 扮演安全审计专家角色，对 AI Agent 项目在�
 ## Workflow
 
 ### Step 1: 项目信息收集
+
 - 了解项目架构、技术栈、部署方式
 - 确定审查覆盖范围（全部 10 个域或按需裁剪）
 - 获取必要的配置文件和部署文档访问权限
 
 ### Step 2: 清单逐域审查
+
 - 按优先级依次审查（建议从 ❶ → ❿ 顺序）
 - 每个 Checklist 项标注状态：✅ 已通过 / ❌ 未通过 / ⚠️ 部分通过 / N/A 不适用
 - 对 ❌ 和 ⚠️ 项记录详细发现和风险级别
 
 ### Step 3: 风险定级与汇总
+
 - 按照标准为每个发现评定风险级别：
   - **Critical**: 可直接导致系统被完全控制、数据大规模泄露
   - **High**: 可导致重要数据泄露或服务中断
@@ -380,11 +382,13 @@ Agent Security Reviewer 扮演安全审计专家角色，对 AI Agent 项目在�
   - **Low**: 最佳实践偏离，暂无直接利用路径
 
 ### Step 4: 生成审查报告
+
 - 按 Deliverables 章节的模板组织内容
 - 为每个未通过项提供具体的修复方案和验证方法
 - 按风险级别排序优先修复建议
 
 ### Step 5: 报告交付与跟进
+
 - 向项目团队交付审查报告
 - 沟通优先修复项
 - 设定复查时间节点
@@ -430,15 +434,15 @@ docker inspect <container> | jq '.[].Config.User'
 
 ## References
 
-| 标准/指南 | 说明 |
-|-----------|------|
+| 标准/指南                                                                                                     | 说明                        |
+| ------------------------------------------------------------------------------------------------------------- | --------------------------- |
 | [OWASP Top 10 for LLM Applications](https://owasp.org/www-project-top-10-for-large-language-model-applications/) | LLM 应用 OWASP 十大安全风险 |
-| [OWASP API Security Top 10](https://owasp.org/API-Security/) | API 安全十大风险 |
-| [CIS Docker Benchmark](https://www.cisecurity.org/benchmark/docker) | Docker 安全配置基线 |
-| [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes) | Kubernetes 安全配置基线 |
-| [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework) | NIST AI 风险管理框架 |
-| [Google SAIF](https://saif.google/) | Google 安全 AI 框架 |
-| [MITRE ATLAS](https://atlas.mitre.org/) | AI 系统对抗威胁全景 |
+| [OWASP API Security Top 10](https://owasp.org/API-Security/)                                                     | API 安全十大风险            |
+| [CIS Docker Benchmark](https://www.cisecurity.org/benchmark/docker)                                              | Docker 安全配置基线         |
+| [CIS Kubernetes Benchmark](https://www.cisecurity.org/benchmark/kubernetes)                                      | Kubernetes 安全配置基线     |
+| [NIST AI Risk Management Framework](https://www.nist.gov/itl/ai-risk-management-framework)                       | NIST AI 风险管理框架        |
+| [Google SAIF](https://saif.google/)                                                                              | Google 安全 AI 框架         |
+| [MITRE ATLAS](https://atlas.mitre.org/)                                                                          | AI 系统对抗威胁全景         |
 
 ---
 
@@ -446,20 +450,20 @@ docker inspect <container> | jq '.[].Config.User'
 
 ### Risk Level Definitions
 
-| Level | Symbol | Definition |
-|-------|--------|------------|
-| Critical | 🔴 | 可导致系统完全被控、大规模数据泄露、服务不可用 |
-| High | 🟠 | 可导致重要数据泄露、权限提升、服务降级 |
-| Medium | 🟡 | 可能被利用但有前置条件，影响范围有限 |
-| Low | 🟢 | 安全最佳实践偏离，暂无明确利用路径 |
-| Info | 🔵 | 建议性优化，不构成安全风险 |
+| Level    | Symbol | Definition                                     |
+| -------- | ------ | ---------------------------------------------- |
+| Critical | 🔴     | 可导致系统完全被控、大规模数据泄露、服务不可用 |
+| High     | 🟠     | 可导致重要数据泄露、权限提升、服务降级         |
+| Medium   | 🟡     | 可能被利用但有前置条件，影响范围有限           |
+| Low      | 🟢     | 安全最佳实践偏离，暂无明确利用路径             |
+| Info     | 🔵     | 建议性优化，不构成安全风险                     |
 
 ### Quick Assessment Score
 
-| 分数 | 评级 | 建议 |
-|------|------|------|
-| 90-100 | A - 优秀 | 可以上线部署 |
-| 80-89 | B - 良好 | 可以上线，但 High 级别问题需在首次迭代中修复 |
-| 70-79 | C - 一般 | 修复所有 Critical 和 High 问题后方可上线 |
-| 60-69 | D - 较差 | 存在严重安全风险，不建议上线 |
-| < 60 | F - 危险 | 必须全面整改后重新审查 |
+| 分数   | 评级     | 建议                                         |
+| ------ | -------- | -------------------------------------------- |
+| 90-100 | A - 优秀 | 可以上线部署                                 |
+| 80-89  | B - 良好 | 可以上线，但 High 级别问题需在首次迭代中修复 |
+| 70-79  | C - 一般 | 修复所有 Critical 和 High 问题后方可上线     |
+| 60-69  | D - 较差 | 存在严重安全风险，不建议上线                 |
+| < 60   | F - 危险 | 必须全面整改后重新审查                       |
