@@ -7,6 +7,7 @@ from app.models.user import User  # noqa: F401
 from app.models.session import Session  # noqa: F401
 from app.models.message import Message  # noqa: F401
 from app.models.feedback import Feedback  # noqa: F401
+from app.models.memory import LongTermMemory  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

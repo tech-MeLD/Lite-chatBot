@@ -29,6 +29,7 @@ docker compose up -d
 
 ```bash
 docker exec -it backend-ollama-1 ollama pull qwen2.5:1.5b
+docker exec -it backend-ollama-1 ollama pull bge-m3
 ```
 
 ### 5. 验证
@@ -480,6 +481,6 @@ docker compose up -d
 - [x] Celery 人工审核解耦
 - [x] Docker Compose 一键部署
 - [x] 安全中间件与速率限制
+- [x] pgvector 长期记忆（用户偏好提取、语义检索）
 - [ ] Tauri 桌面端（Phase 7+）
 - [ ] LoRA 微调管线（Phase 7+）
-- [ ] pgvector 长期记忆（Phase 7+）

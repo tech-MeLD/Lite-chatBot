@@ -1,5 +1,4 @@
 import json
-import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,10 +7,11 @@ from sse_starlette.sse import EventSourceResponse
 from app.main import get_db
 from app.api.deps import get_current_user, get_chat_service
 from app.models.user import User
-from app.models.session import Session, SessionStatus
+from app.models.session import Session
 from app.models.message import Message, MessageRole
 from app.schemas.chat import ChatSendRequest
 from app.services.chat_service import ChatService
+from app.services.memory_service import MemoryService
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -40,14 +40,25 @@ async def send_message(
     db.add(user_msg)
     await db.flush()
 
+    # Retrieve relevant long-term memories for this user
+    memory_service = MemoryService(db)
+    memories = await memory_service.retrieve_relevant(
+        user_id=str(user.id),
+        query=request.content,
+        top_k=3,
+    )
+
+    assistant_msg_ref = []
+
     async def event_generator():
-        answer_chunks = []
+        nonlocal assistant_msg_ref
+
         async for event in chat_service.send_message(
             session_id=session_id,
             user_id=str(user.id),
             content=request.content,
+            user_memories=memories,
         ):
-            # If it's a 'done' event, capture the answer
             if '"type": "done"' in event:
                 try:
                     data_str = event.replace("data: ", "").strip()
@@ -63,6 +74,7 @@ async def send_message(
                 )
                 db.add(assistant_msg)
                 await db.flush()
+                assistant_msg_ref = [assistant_msg]
 
                 event_with_id = json.dumps({
                     "type": "done",
@@ -73,6 +85,14 @@ async def send_message(
                     }
                 })
                 yield f"data: {event_with_id}\n\n"
+
+                # Extract and store new memories from this conversation
+                conversation = f"用户: {request.content}\n助手: {answer_text}"
+                await memory_service.extract_and_store(
+                    user_id=str(user.id),
+                    conversation=conversation,
+                    llm=chat_service.llm,
+                )
             else:
                 yield event
 

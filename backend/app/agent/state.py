@@ -10,6 +10,7 @@ class AgentState(TypedDict):
     intent: str
     intent_confidence: float
     rag_context: list[str]
+    user_memories: list[str]
     rewrite_count: int
     final_answer: str
     needs_human: bool

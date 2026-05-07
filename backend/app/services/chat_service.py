@@ -23,6 +23,7 @@ class ChatService:
         session_id: str,
         user_id: str,
         content: str,
+        user_memories: list[str] | None = None,
     ) -> AsyncGenerator[str, None]:
         thread_id = f"session_{session_id}"
         config = {"configurable": {"thread_id": thread_id}}
@@ -34,13 +35,13 @@ class ChatService:
             "intent": "",
             "intent_confidence": 0.0,
             "rag_context": [],
+            "user_memories": user_memories or [],
             "rewrite_count": 0,
             "final_answer": "",
             "needs_human": False,
             "error": None,
         }
 
-        # Stream node updates to track progress
         last_intent = None
         async for event in self._graph.astream(initial_state, config, stream_mode="values"):
             if isinstance(event, dict):
@@ -53,12 +54,10 @@ class ChatService:
                 if error:
                     yield f"data: {json.dumps({'type': 'error', 'data': {'message': error}})}\n\n"
 
-                # Stream tokens from final_answer if available
                 answer = event.get("final_answer", "")
                 if answer:
                     yield f"data: {json.dumps({'type': 'thinking', 'data': {'message': '正在生成回复...'}})}\n\n"
 
-        # Get final state
         final_state = await self._graph.aget_state(config)
         if final_state and final_state.values:
             answer = final_state.values.get("final_answer", "")

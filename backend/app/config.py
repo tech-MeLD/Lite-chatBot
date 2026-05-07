@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:1.5b"
+    ollama_embed_model: str = "bge-m3"
     ollama_timeout: float = 30.0
 
     rag_mode: str = "mock"
