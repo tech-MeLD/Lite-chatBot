@@ -1,5 +1,6 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import Response
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -148,7 +149,7 @@ async def update_session(
     )
 
 
-@router.delete("/{session_id}", status_code=204)
+@router.delete("/{session_id}")
 async def delete_session(
     session_id: str,
     user: User = Depends(get_current_user),
@@ -171,3 +172,4 @@ async def delete_session(
     # Delete the session itself
     await db.execute(delete(Session).where(Session.id == session.id))
     await db.flush()
+    return Response(status_code=204)
