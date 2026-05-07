@@ -15,6 +15,7 @@ export default function ChatPage() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Load sessions
   const loadSessions = useCallback(async () => {
@@ -22,8 +23,8 @@ export default function ChatPage() {
     try {
       const data = await getSessions();
       setSessions(data);
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error('Load sessions failed:', err);
     } finally {
       setSessionsLoading(false);
     }
@@ -40,8 +41,8 @@ export default function ChatPage() {
       setSessions((prev) => [session, ...prev]);
       setSelectedSession(session);
       clearMessages();
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error('Create session failed:', err);
     }
   }
 
@@ -52,8 +53,8 @@ export default function ChatPage() {
     try {
       const msgs = await getMessages(session.id);
       setMessages(msgs);
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error('Load messages failed:', err);
     } finally {
       setMessagesLoading(false);
     }
@@ -68,8 +69,8 @@ export default function ChatPage() {
         setSessions((prev) => [session, ...prev]);
         setSelectedSession(session);
         await send(session.id, content);
-      } catch {
-        // silently fail
+      } catch (err) {
+        console.error('Send message failed:', err);
       }
     } else {
       await send(selectedSession.id, content);
@@ -78,6 +79,7 @@ export default function ChatPage() {
 
   // Delete session
   async function handleDelete(session: Session) {
+    setDeleteError(null);
     try {
       await deleteSession(session.id);
       setSessions((prev) => prev.filter((s) => s.id !== session.id));
@@ -85,8 +87,10 @@ export default function ChatPage() {
         setSelectedSession(null);
         clearMessages();
       }
-    } catch {
-      // silently fail
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '删除失败';
+      console.error('Delete session failed:', err);
+      setDeleteError(msg);
     }
   }
 
@@ -123,6 +127,8 @@ export default function ChatPage() {
           onCreate={handleCreateSession}
           onDelete={handleDelete}
           loading={sessionsLoading}
+          deleteError={deleteError}
+          onDismissError={() => setDeleteError(null)}
         />
 
         <main className="flex-1 flex flex-col bg-gray-50 min-w-0">

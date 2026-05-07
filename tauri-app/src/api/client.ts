@@ -150,6 +150,7 @@ export async function sendMessageSSE(
     const decoder = new TextDecoder();
     let buffer = '';
     let receivedDone = false;
+    let hadError = false;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -171,7 +172,9 @@ export async function sendMessageSSE(
               const data = JSON.parse(eventStr.slice(6)) as SSEEvent;
 
               if (data.type === 'error') {
+                hadError = true;
                 onError(data.data.message || '未知错误');
+                // After receiving error, we can stop reading — the stream will end
               } else if (data.type === 'done') {
                 receivedDone = true;
                 onEvent(data);
@@ -190,7 +193,7 @@ export async function sendMessageSSE(
     }
 
     // Try parsing any remaining data in the buffer
-    if (!receivedDone && buffer.trim()) {
+    if (!receivedDone && !hadError && buffer.trim()) {
       const trimmed = buffer.trim();
       if (trimmed.startsWith('data: ')) {
         try {
@@ -206,8 +209,8 @@ export async function sendMessageSSE(
       }
     }
 
-    // Only report error if we truly never got a done event
-    if (!receivedDone) {
+    // Only report disconnect if we never got done OR error event
+    if (!receivedDone && !hadError) {
       onError('连接意外断开');
     }
   } catch (err) {

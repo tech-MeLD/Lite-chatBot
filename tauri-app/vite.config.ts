@@ -14,7 +14,7 @@ export default defineConfig({
   },
   server: {
     port: 1420,
-    strictPort: true,
+    strictPort: !!host,  // Strict only in Tauri mode (needs exact port); browser dev allows fallback
     host: host || false,
     hmr: host
       ? {

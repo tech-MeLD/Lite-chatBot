@@ -8,6 +8,8 @@ interface SessionListProps {
   onCreate: () => void;
   onDelete: (session: Session) => void;
   loading: boolean;
+  deleteError: string | null;
+  onDismissError: () => void;
 }
 
 export default function SessionList({
@@ -17,6 +19,8 @@ export default function SessionList({
   onCreate,
   onDelete,
   loading,
+  deleteError,
+  onDismissError,
 }: SessionListProps) {
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
@@ -38,6 +42,12 @@ export default function SessionList({
   return (
     <div className="w-[280px] bg-white border-r border-gray-200 flex flex-col h-full shrink-0">
       <div className="p-4 border-b border-gray-100">
+        {deleteError && (
+          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700 flex items-center justify-between">
+            <span>{deleteError}</span>
+            <button onClick={onDismissError} className="text-red-400 hover:text-red-600 ml-2">&times;</button>
+          </div>
+        )}
         <button
           onClick={onCreate}
           disabled={loading}
