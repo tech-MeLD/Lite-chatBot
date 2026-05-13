@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
-from app.main import get_db, AsyncSessionLocal
+from app.main import get_db
 from app.api.deps import get_current_user, get_chat_service
 from app.models.user import User
 from app.models.session import Session
@@ -17,25 +17,6 @@ from app.services.memory_service import MemoryService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/chat", tags=["chat"])
-
-
-async def _extract_memories_background(
-    user_id: str,
-    conversation: str,
-    llm,
-):
-    """Separate DB session for background memory extraction."""
-    try:
-        async with AsyncSessionLocal() as bg_db:
-            memory_service = MemoryService(bg_db)
-            await memory_service.extract_and_store(
-                user_id=user_id,
-                conversation=conversation,
-                llm=llm,
-            )
-            await bg_db.commit()
-    except Exception:
-        logger.exception("Background memory extraction failed")
 
 
 @router.post("/send")
@@ -64,11 +45,15 @@ async def send_message(
 
     # Retrieve relevant long-term memories for this user
     memory_service = MemoryService(db)
-    memories = await memory_service.retrieve_relevant(
-        user_id=str(user.id),
-        query=request.content,
-        top_k=3,
-    )
+    try:
+        memories = await memory_service.retrieve_relevant(
+            user_id=str(user.id),
+            query=request.content,
+            top_k=3,
+        )
+    except Exception:
+        logger.exception("Failed to retrieve memories, continuing without")
+        memories = []
 
     assistant_msg_ref = []
 
@@ -84,8 +69,7 @@ async def send_message(
             ):
                 if '"type": "done"' in event:
                     try:
-                        data_str = event.replace("data: ", "").strip()
-                        done_data = json.loads(data_str)
+                        done_data = json.loads(event)
                         answer_text = done_data.get("data", {}).get("answer", "")
                     except Exception:
                         logger.exception("Failed to parse done event")
@@ -109,29 +93,30 @@ async def send_message(
                                 "needs_human": done_data.get("data", {}).get("needs_human", False),
                             }
                         })
-                        yield f"data: {event_with_id}\n\n"
+                        yield event_with_id
 
                         # Give the event loop a chance to flush the SSE data
                         await asyncio.sleep(0)
 
                     except Exception:
                         logger.exception("Failed to save assistant message")
-                        yield f"data: {json.dumps({'type': 'error', 'data': {'message': '消息保存失败'}})}\n\n"
+                        yield json.dumps({'type': 'error', 'data': {'message': '消息保存失败'}})
                         return
 
-                    # Schedule memory extraction as background task — do NOT block the SSE stream
-                    conversation = f"用户: {request.content}\n助手: {answer_text}"
-                    asyncio.create_task(
-                        _extract_memories_background(
+                    # Extract and store memories (safe — both inner and outer try/except protect the stream)
+                    try:
+                        conversation = f"用户: {request.content}\n助手: {answer_text}"
+                        await memory_service.extract_and_store(
                             user_id=str(user.id),
                             conversation=conversation,
                             llm=chat_service.llm,
                         )
-                    )
+                    except Exception:
+                        logger.exception("Memory extraction failed")
                 else:
                     yield event
         except Exception:
             logger.exception("SSE event generator crashed")
-            yield f"data: {json.dumps({'type': 'error', 'data': {'message': '系统处理异常，请重试'}})}\n\n"
+            yield json.dumps({'type': 'error', 'data': {'message': '系统处理异常，请重试'}})
 
     return EventSourceResponse(event_generator())

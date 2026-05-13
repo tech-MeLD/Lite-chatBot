@@ -125,7 +125,12 @@ export async function sendMessageSSE(
     return;
   }
 
+  // AbortController for timeout (120s should be enough for CPU inference)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120000);
+
   try {
+    console.log('[SSE] Opening connection to', `${API_BASE}/chat/send`);
     const response = await fetch(`${API_BASE}/chat/send`, {
       method: 'POST',
       headers: {
@@ -133,6 +138,7 @@ export async function sendMessageSSE(
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ session_id: sessionId, content }),
+      signal: controller.signal,
     });
 
     if (!response.ok) {
@@ -142,78 +148,155 @@ export async function sendMessageSSE(
         return;
       }
       const detail = await response.text();
+      console.error('[SSE] HTTP error:', response.status, detail);
       onError(detail || `HTTP ${response.status}`);
       return;
     }
 
+    console.log('[SSE] Connection opened, starting stream read');
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
     let receivedDone = false;
     let hadError = false;
+    let eventsParsed = 0;
 
     while (true) {
       const { done, value } = await reader.read();
 
-      // Process any data before checking done flag.
-      // This is critical: some browser implementations may return
-      // { value: lastChunk, done: true } for the final frame.
       if (value) {
-        buffer += decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value, { stream: true });
+        console.log('[SSE] Received chunk, length:', chunk.length, 'preview:', chunk.substring(0, 80));
+        buffer += chunk;
 
-        // SSE events are separated by \n\n
-        while (buffer.includes('\n\n')) {
-          const idx = buffer.indexOf('\n\n');
-          const eventStr = buffer.substring(0, idx);
-          buffer = buffer.substring(idx + 2);
+        // SSE events are separated by double-newline.
+        // Handle both \n\n (Unix) and \r\n\r\n (HTTP line endings that may leak through).
+        while (containsEventSeparator(buffer)) {
+          const { eventStr, remaining } = extractNextEvent(buffer);
+          buffer = remaining;
 
-          if (eventStr.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(eventStr.slice(6)) as SSEEvent;
+          // Skip comment lines (SSE ping: ": ping - ...")
+          const dataLine = extractDataLine(eventStr);
+          if (!dataLine) {
+            // Comment or empty event, skip
+            continue;
+          }
 
-              if (data.type === 'error') {
-                hadError = true;
-                onError(data.data.message || '未知错误');
-                // After receiving error, we can stop reading — the stream will end
-              } else if (data.type === 'done') {
-                receivedDone = true;
-                onEvent(data);
-                onDone();
-              } else {
-                onEvent(data);
-              }
-            } catch {
-              // Skip malformed JSON - may be split across chunks
+          console.log('[SSE] Parsing event line:', dataLine.substring(0, 100));
+          try {
+            const data = JSON.parse(dataLine) as SSEEvent;
+            eventsParsed++;
+            console.log('[SSE] Event #' + eventsParsed + ' type:', data.type);
+
+            if (data.type === 'error') {
+              hadError = true;
+              console.warn('[SSE] Error event received:', data.data?.message);
+              onError(data.data.message || '未知错误');
+            } else if (data.type === 'done') {
+              receivedDone = true;
+              console.log('[SSE] Done event received, answer:', (data.data?.answer || '').substring(0, 50));
+              onEvent(data);
+              onDone();
+            } else {
+              onEvent(data);
             }
+          } catch (parseErr) {
+            console.error('[SSE] JSON parse failed for line:', dataLine.substring(0, 100), 'Error:', parseErr);
           }
         }
       }
 
-      if (done) break;
+      if (done) {
+        console.log('[SSE] Stream ended (reader done). receivedDone:', receivedDone, 'hadError:', hadError);
+        break;
+      }
     }
 
     // Try parsing any remaining data in the buffer
     if (!receivedDone && !hadError && buffer.trim()) {
       const trimmed = buffer.trim();
-      if (trimmed.startsWith('data: ')) {
+      console.log('[SSE] Remaining buffer after stream end:', trimmed.substring(0, 200));
+      const dataLine = extractDataLine(trimmed);
+      if (dataLine) {
         try {
-          const data = JSON.parse(trimmed.slice(6)) as SSEEvent;
+          const data = JSON.parse(dataLine) as SSEEvent;
+          console.log('[SSE] Final buffer parsed, type:', data.type);
           if (data.type === 'done') {
             receivedDone = true;
             onEvent(data);
             onDone();
           }
         } catch {
-          // Final parse failed, data was incomplete
+          console.error('[SSE] Final buffer JSON parse failed');
         }
       }
     }
 
     // Only report disconnect if we never got done OR error event
     if (!receivedDone && !hadError) {
-      onError('连接意外断开');
+      console.error('[SSE] Disconnect without done or error. Total events:', eventsParsed, 'Remaining buffer:', buffer.substring(0, 200));
+      onError('连接意外断开，请重新发送消息');
     }
   } catch (err) {
-    onError(err instanceof Error ? err.message : '网络连接错误');
+    console.error('[SSE] Fatal error:', err);
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      onError('回复超时，AI正在处理中，请稍后再试');
+    } else if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      onError('无法连接到服务器，请检查网络后重试');
+    } else {
+      onError(err instanceof Error ? err.message : '网络连接错误');
+    }
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
+
+// --- SSE parsing helpers ---
+
+/**
+ * Check if buffer contains an SSE event separator.
+ * Handles both \n\n (standard SSE) and \r\n\r\n (some HTTP proxies).
+ */
+function containsEventSeparator(buffer: string): boolean {
+  return buffer.includes('\n\n') || buffer.includes('\r\n\r\n');
+}
+
+/**
+ * Extract the next complete SSE event from the buffer.
+ * Returns the event string and the remaining buffer after the separator.
+ */
+function extractNextEvent(buffer: string): { eventStr: string; remaining: string } {
+  // Try \n\n first (most common)
+  const doubleIdx = buffer.indexOf('\n\n');
+  if (doubleIdx !== -1) {
+    return {
+      eventStr: buffer.substring(0, doubleIdx),
+      remaining: buffer.substring(doubleIdx + 2),
+    };
+  }
+  // Fallback to \r\n\r\n
+  const crlfIdx = buffer.indexOf('\r\n\r\n');
+  return {
+    eventStr: buffer.substring(0, crlfIdx),
+    remaining: buffer.substring(crlfIdx + 4),
+  };
+}
+
+/**
+ * Extract the first data line from an SSE event string.
+ * An SSE event can have multiple "data:" lines; we take the first one.
+ * Returns the content after "data: " or null if no data line found.
+ */
+function extractDataLine(eventStr: string): string | null {
+  const lines = eventStr.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('data: ')) {
+      return trimmed.slice(6);  // Return content after "data: "
+    }
+    if (trimmed.startsWith('data:')) {
+      return trimmed.slice(5);  // Handle "data:" without space
+    }
+  }
+  return null;  // Comment or empty event
 }

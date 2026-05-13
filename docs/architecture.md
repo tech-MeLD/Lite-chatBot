@@ -148,7 +148,7 @@ LangGraph 通过 `thread_id` 维护快照链。新消息到达时自动加载最
 | Layer 1 | RAG 检索节点 `asyncio.wait_for(5s)` | 5s |
 | Layer 2 | 查询重写 `rewrite_count >= 3` 熔断 | ~15s |
 | Layer 3 | 全图 `asyncio.wait_for(30s)` | 30s |
-| Layer 4 | FastAPI 全局异常处理 → 500 | ∞ |
+| Layer 4 | FastAPI 全局异常处理 → 500（含 CORS 头） | ∞ |
 
 ---
 

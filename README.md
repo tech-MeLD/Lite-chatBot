@@ -8,12 +8,12 @@
 
 ### 1. 环境要求
 
-| 环境 | 用途 |
-|------|------|
-| Docker Desktop | 后端服务运行 |
-| Python 3.12 | 本地开发/测试 |
-| Node.js 18+ | 桌面端前端开发 |
-| Rust 1.70+ | Tauri 桌面端编译 |
+| 环境           | 用途             |
+| -------------- | ---------------- |
+| Docker Desktop | 后端服务运行     |
+| Python 3.12    | 本地开发/测试    |
+| Node.js 18+    | 桌面端前端开发   |
+| Rust 1.70+     | Tauri 桌面端编译 |
 
 ### 2. 配置环境变量
 
@@ -87,42 +87,42 @@ curl -X POST http://localhost:8000/api/v1/chat/send \
 
 ## 技术栈
 
-| 组件 | 方案 |
-|------|------|
-| AI 模型 | Qwen2.5-1.5B-Instruct (Ollama) |
-| Embedding | bge-m3 (Ollama) |
-| RAG 引擎 | RAGFlow（混合检索）或 Mock（开发） |
-| Agent 框架 | LangGraph（图状态机 + 条件边 + 持久化） |
-| 后端 | FastAPI（SSE 流式 + Celery 异步任务） |
-| 数据库 | PostgreSQL + pgvector |
-| 记忆系统 | Checkpointer（短期）+ pgvector（长期） |
-| 桌面端 | Tauri v2 + React 18 + TypeScript + Tailwind CSS |
-| 容器化 | Docker Compose |
+| 组件       | 方案                                            |
+| ---------- | ----------------------------------------------- |
+| AI 模型    | Qwen2.5-1.5B-Instruct (Ollama)                  |
+| Embedding  | bge-m3 (Ollama)                                 |
+| RAG 引擎   | RAGFlow（混合检索）或 Mock（开发）              |
+| Agent 框架 | LangGraph（图状态机 + 条件边 + 持久化）         |
+| 后端       | FastAPI（SSE 流式 + Celery 异步任务）           |
+| 数据库     | PostgreSQL + pgvector                           |
+| 记忆系统   | Checkpointer（短期）+ pgvector（长期）          |
+| 桌面端     | Tauri v2 + React 18 + TypeScript + Tailwind CSS |
+| 容器化     | Docker Compose                                  |
 
 ## 文档
 
-| 文档 | 说明 |
-|------|------|
-| [API 文档](docs/api.md) | 完整 REST API 参考（认证、对话、会话、反馈） |
-| [部署指南](docs/deployment.md) | 开发/生产/ECS 部署流程，Docker 镜像加速，安全清单 |
-| [架构设计](docs/architecture.md) | LangGraph 图结构、Checkpoint 持久化、条件边路由、异常处理 |
-| [记忆系统](docs/memory-system.md) | Checkpointer 短期记忆 + pgvector 长期记忆详解 |
+| 文档                           | 说明                                                      |
+| ------------------------------ | --------------------------------------------------------- |
+| [API 文档](docs/api.md)           | 完整 REST API 参考（认证、对话、会话、反馈）              |
+| [部署指南](docs/deployment.md)    | 开发/生产/ECS 部署流程，Docker 镜像加速，安全清单         |
+| [架构设计](docs/architecture.md)  | LangGraph 图结构、Checkpoint 持久化、条件边路由、异常处理 |
+| [记忆系统](docs/memory-system.md) | Checkpointer 短期记忆 + pgvector 长期记忆详解             |
 
 ## 项目交付物
 
-- [x] LangGraph 工作流引擎（条件边、状态传递、超时熔断、递归限制）
-- [x] Checkpoint 持久化到 PostgreSQL
-- [x] 动态中断恢复机制
-- [x] RAG 抽象层（Mock + RAGFlow 可切换）
-- [x] Mock 微信登录 + JWT 认证
-- [x] SSE 流式对话
-- [x] 反馈收集（数据飞轮基础）
-- [x] Celery 人工审核解耦
-- [x] pgvector 长期记忆（用户偏好提取、语义检索）
-- [x] Docker Compose 一键部署
-- [x] 安全中间件与速率限制
-- [x] LoRA 微调管线（数据导出、格式化、QLoRA 训练、评估、Ollama 部署）
-- [x] Tauri 桌面端（登录、会话管理、SSE 流式对话、反馈、.msi/.exe 打包）
+- [X] LangGraph 工作流引擎（条件边、状态传递、超时熔断、递归限制）
+- [X] Checkpoint 持久化到 PostgreSQL
+- [X] 动态中断恢复机制
+- [X] RAG 抽象层（Mock + RAGFlow 可切换）
+- [X] Mock 微信登录 + JWT 认证
+- [X] SSE 流式对话
+- [X] 反馈收集（数据飞轮基础）
+- [X] Celery 人工审核解耦
+- [X] pgvector 长期记忆（用户偏好提取、语义检索）
+- [X] Docker Compose 一键部署
+- [X] 安全中间件与速率限制
+- [X] LoRA 微调管线（数据导出、格式化、QLoRA 训练、评估、Ollama 部署）
+- [X] Tauri 桌面端（登录、会话管理、SSE 流式对话、反馈、.msi/.exe 打包）
 
 ## 更新报告
 

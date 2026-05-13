@@ -68,7 +68,8 @@ backend/data/
 .qoder/
 
 # ========================
-# Logs
+# Windows
 # ========================
+nul
 *.log
 logs/

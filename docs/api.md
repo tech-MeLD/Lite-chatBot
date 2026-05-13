@@ -173,6 +173,12 @@ data: {"type":"done","data":{"answer":"根据退货政策，支持7天无理由�
 
 **状态值**: `active` | `paused` | `closed`
 
+### DELETE /sessions/{session_id}
+
+删除会话（级联删除关联的 feedbacks 和 messages）。
+
+**响应**: `204 No Content`
+
 ---
 
 ## 反馈
