@@ -4,6 +4,8 @@
 
 提供 **Tauri 桌面客户端**（Windows .msi/.exe），React + TypeScript 构建，SSE 流式对话体验。
 
+![1779544925414](image/README/1779544925414.png)
+
 ## 快速开始
 
 ### 1. 环境要求
